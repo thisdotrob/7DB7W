@@ -1,0 +1,7 @@
+version: "3.7"
+
+services:
+  couchdb:
+    image: couchdb:2.3.0
+    ports:
+      - 5984:5984
