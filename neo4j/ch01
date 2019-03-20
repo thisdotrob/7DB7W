@@ -1,0 +1,109 @@
+Create a node with some properties and a label of "Wine":
+CREATE (w:Wine {name: "Prancing Wolf", style: "ice wine", vintage: 2015});
+
+Create a node with a label of "Publication":
+CREATE (p:Publication {name: "Wine Expert Monthly"});
+
+Match all nodes in the graph:
+MATCH (n) RETURN n;
+
+Create a relationship between the two nodes, using MATCH to find them by their
+labels and properties, returning the type of the relationship ("reported_on"):
+MATCH (p:Publication {name: "Wine Expert Monthly"}),
+      (w:Wine {name: "Prancing Wolf", vintage: 2015})
+CREATE (p)-[r:reported_on {rating: 90}]->(w);
+
+Set a property on a relationship:
+MATCH ()-[r]-() WHERE r.rating = 90 SET r.rating = 97;
+
+Create a node with a label of "GrapeType":
+CREATE (g:GrapeType {name: "Riesling"});
+
+Create another relationship:
+MATCH (w:Wine {name: "Prancing Wolf"}),
+      (g:GrapeType {name: "Riesling"})
+CREATE (w)-[r:grape_type]->(g);
+
+Create a node with a label of "Winery" and create a relationship:
+CREATE (wr:Winery {name: "Prancing Wolf Winery"});
+
+MATCH (w:Wine {name: "Prancing Wolf"}),
+      (wr:Winery {name: "Prancing Wolf Winery"})
+CREATE (wr)-[r:produced]->(w)
+
+Create some more wines:
+CREATE (w:Wine {name: "Prancing Wolf", style: "Kabinett", vintage: 2002});
+CREATE (w:Wine {name: "Prancing Wolf", style: "Spatlese", vintage: 2010});
+
+Set all Prancing Wolf wines to be produced by the same winery, using MERGE
+to avoid creating duplicates:
+MATCH (w:Wine {name: "Prancing Wolf"}),
+      (wr:Winery {name: "Prancing Wolf Winery"})
+MERGE (wr)-[r:produced]->(w);
+
+Set all Prancing Wolf wines to be of the same grape type:
+MATCH (w:Wine {name: "Prancing Wolf"}),
+      (g:GrapeType {name: "Riesling"})
+MERGE (w)-[r:grape_type]->(g);
+
+Create some people:
+CREATE (p:Person {name: "Alice"});
+CREATE (p:Person {name: "Tom"});
+CREATE (p:Person {name: "Patty"});
+
+Make Tom like ice wine:
+MATCH (p:Person {name: "Tom"}), (w:Wine {style: "ice wine"})
+CREATE (p)-[r:likes]->(w)
+
+Make Alice like Kabinett and ice wine and trust Wine Expert Monthly:
+MATCH (p:Person {name: "Alice"}),
+      (w1:Wine {style: "ice wine"}),
+      (w2:Wine {style: "Kabinett"}),
+      (pub:Publication {name: "Wine Expert Monthly"})
+CREATE (p)-[r1:likes]->(w1)
+CREATE (p)-[r2:likes]->(w2)
+CREATE (p)-[r3:trusts]->(pub)
+
+Make Patty friends with Tom and Alice:
+MATCH (p0:Person {name: "Patty"}),
+      (p1:Person {name: "Tom"}),
+      (p2:Person {name: "Alice"})
+CREATE (p0)-[r0:friends]->(p1)
+CREATE (p0)-[r1:friends]->(p2)
+
+See all nodes associated with Tom:
+MATCH (p:Person {name: "Tom"})-->(n) RETURN n;
+
+See all people Patty is friends with:
+MATCH (p:Person {name: "Patty"})-->(other:Person) RETURN other.name;
+
+See all nodes with the label Person, excluding Patty:
+MATCH (p:Person) WHERE p.name <> "Patty" RETURN p;
+
+Querying for non adjacent nodes:
+CREATE (p1:Person {name: "Ahmed"}), (p2:Person {name: "Kofi"});
+MATCH (p1:Person {name: "Ahmed"}),
+      (p2:Person {name: "Kofi"}),
+      (p3:Person {name: "Alice"}),
+      (p4:Person {name: "Tom"})
+CREATE (p1)-[r1:friends]->(p3)
+CREATE (p2)-[r2:friends]->(p4);
+MATCH (fof:Person)-[:friends]-(f:Person)-[:friends]-(p:Person {name: "Patty"})
+RETURN fof.name;
+
+Create an index on the Wine/name type/property combination:
+CREATE INDEX ON :Wine(name);
+
+Drop the index:
+DROP INDEX ON :Wine(name);
+
+Ensure every Wine node has a unique name:
+CREATE CONSTRAINT ON (w:Wine) ASSERT w.name IS UNIQUE;
+
+
+
+
+Other commands:
+
+Delete all nodes and relationships:
+MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n, r;
